@@ -1,0 +1,7 @@
+Exp1 - visual entrainment
+Exp2 - binaural beats 
+Exp3 - monaural beats
+Exp4 - binaural beats
+Exp5 - binaural beats (replica of Exp2)
+Exp6 - monaural beats Online (PsychoPy+Pavlovia)
+
