@@ -5,6 +5,7 @@
 
 #==================================
 #=========== One sample t test ======
+#
 #====================================
 library(tidyverse)
 library(ggplot2)
@@ -1451,4 +1452,177 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
          mu = 0)
  
+ #============================================================
+ # check effect of previous trial on next trial pre-trial pupil
+ #=============================================================
+ 
+ 
+ 
+ # behavioral summarized data
+ d <- read.table("C:\\Users\\IndrePil\\Documents\\vWM Entrainment\\Pupillometry\\results\\allSummaryTable_previous_trial.csv", header=TRUE, sep=",", dec='.')
+ 
+ # raw behavioral
+ d_all <- read.table("C:\\Users\\IndrePil\\Documents\\vWM Entrainment\\Pupillometry\\results\\allRespTable_previous_trial.csv", header=TRUE, sep=",", dec='.')
+ 
+ # convert variables into factors
+ cols <- c('frequency', 'Load', 'ID', 'gender')
+ d[cols] <- lapply(d[cols], as.factor)
+ 
+ colsA <- c('ID', 'block', 'frequency', 'loads', 'trial', 'response')
+ d_all[colsA] <- lapply(d_all[colsA], as.factor)
+ 
+ 
+ # good participants (based on preprocessing in 'analysins_pupillometry.R')
+ ID_in = c('P03', 'P04', 'S02', 'S03', 'S05', 'S06', 'S08', 'S09', 'S10', 'S11',
+           'S12', 'S16', 'S17', 'S18', 'S19', 'S20', 'S22', 'S23', 'S24', 'S25',
+           'S27', 'S28', 'S29', 'S30', 'S31', 'S32', 'S33', 'S35', 'S36', 'S38',
+           'S39', 'S40', 'S41', 'S42', 'S44', 'S45', 'S46', 'S47', 'S48', 'S49',
+           'S50', 'S51', 'S52', 'S53', 'S55', 'S56', 'S58', 'S59')
+ 
+ 
+ d <- filter(d, ID %in% ID_in)
+ d_all <- filter(d_all, ID %in% ID_in)
+ # add low/high performers
+ 
+ k <- ddply(d[which(d$frequency == 0),], ~ID, summarise, mean_k = mean(K))
+ #k$performer <- k$ID
+ 
+ k[which(k$mean_k < median(k$mean_k)), 'performer'] <- 'low'
+ k[which(k$mean_k >= median(k$mean_k)), 'performer'] <- 'high'
+ 
+ performer <- rep(k$performer, each = 9)
+ 
+ d$performer <-performer
+
+ 
+ # pupil
+ 
+ low <- k[which(k$performer == 'low'), 'ID']
+ high <- k[which(k$performer == 'high'), 'ID']
+ 
+ 
+ d_all$performer <- c()
+ d_all[which(d_all$ID %in% low),'performer'] <- 'low'
+ d_all[which(d_all$ID %in% high),'performer'] <- 'high'
+ 
+ #remove Timeouts
+ d_all_cl <- filter(d_all, response != 'Timeout')
+
+ 
+ # recode response variable to 0/1
+ d_all_cl$response2 <-ifelse(d_all_cl$response=="Correct",1,0)
+ 
+ colsL <- c('response2')
+ d_all_cl[colsL] <- lapply( d_all_cl[colsL], as.factor)
+ 
+ # check data
+ ggplot( d_all_cl, aes(frequency, rPupil_fixation_2000_z, fill = response2))+
+   geom_jitter(alpha = .1) +
+   geom_violin(alpha = .75) +
+   ylab("mean pupil diameter (z-score)")+
+   scale_fill_discrete(name = "response", labels = c("Correct", "Wrong"))+
+   theme_classic()+
+   theme(axis.text=element_text(size=12),
+         axis.title=element_text(size=14))
+ #ggsave('data_for_glmer.png')
+ 
+ #dt<- ddply( d_all_cl, ~ID*response*frequency*loads, summarise, mean_pupil = mean(rPupil_fixation_2000_z, na.rm = TRUE))
+ ##dt <- filter(dt, response != "Timeout")
+
+ 
+ 
+# a1 <- ezANOVA(
+#   data = dt
+#   , dv = mean_pupil
+#   , wid = ID
+#   , within = .(frequency, response, loads)
+   #, between = performer
+#   , type = 2
+#   , detailed = TRUE
+# )
+ 
+# print(a1)
+ 
+# ggplot(dt, aes(response, mean_pupil, color = frequency, group = frequency))+
+#   stat_summary(fun.y = "mean",  geom = "line",  size = 1)+
+#   stat_summary(fun.data = mean_se, geom = "errorbar", size = 1, width = 0.3)+
+#   ylab('mean pupil (z-score)')+
+#   theme_classic()+
+#   theme(
+#     axis.text=element_text(size=18),
+#     axis.title=element_text(size=20),
+#     legend.title = element_text(size = 20),
+#     legend.text = element_text(size = 18))
+ 
+# t.test(dt[which(dt$frequency == 4 & dt$response == "Correct"),'mean_pupil'], 
+#        dt[which(dt$frequency == 7 & dt$response == "Correct"),'mean_pupil'], 
+#        paired = TRUE, alternative = 'two.sided' )
+ 
+# t.test(dt[which(dt$frequency == 4 & dt$response == "Wrong"),'mean_pupil'], 
+#        dt[which(dt$frequency == 7 & dt$response == "Wrong"),'mean_pupil'], 
+#        paired = TRUE, alternative = 'two.sided' )
+ 
+ #Linear mixed model for accuracy data
+ library(lme4)
+ library(lmerTest)
+ 
+ # remove baseline
+ d_all_cl <- filter(d_all_cl, frequency != 0)
+ 
+ m1 <- lmer(rPupil_fixation_2000_z ~ (loads+response+change)+ (1|ID), data = d_all_cl)
+
+ print(m1, corr = FALSE)
+ summary(m1)
+ anova(m1)
+ 
+ # run likelihood ratio test to see how well the model fits the data
+ 
+ # m <- glmer(response2 ~ frequency*rPupil_fixation_2000_z+
+ #              (1 | ID), data = d_all_cl, family = binomial)
+ # 
+ # m2 <- glmer(response2 ~ frequency+rPupil_fixation_2000_z+
+ #               (1 | ID), data = d_log, family = binomial)
+ # 
+ # m3 <- glmer(response2 ~ rPupil_fixation_2000_z+
+ #               (1 | ID), data = d_log, family = binomial)
+ # 
+ # m4 <- glm(response2 ~ rPupil_fixation_2000_z, data = d_log, family = binomial)
+ # 
+ # anova(m, m4, test ="Chisq")
+ # library(lmtest)
+ # lrtest(m, m2)
+ # 
+ # 
+ # 
+ # 
+ # 
+ # dt <- ddply(d, ~ID*frequency*performer*load*Response, summarise, mean = mean(rP_mean))
+ # dt$frequency <- as.factor(dt$frequency)
+ # 
+ # # check assumptions
+ # shapiro.test(dt[which(dt$frequency == 4 & performer == "low"),'mean'])
+ # shapiro.test(dt[which(dt$frequency == 4 & performer == "high"),'mean'])
+ # shapiro.test(dt[which(dt$frequency == 7 & performer == "low"),'mean'])
+ # shapiro.test(dt[which(dt$frequency == 7 & performer == "high"),'mean'])
+ # dt <- filter(dt, frequency!=0)
+ # dt <- filter(dt, ID)
+ # 
+ # leveneTest(mean ~ frequency*performer, data = dt)
+ # 
+ # a <- ezANOVA(
+ #   data = dt[which(dt$frequency != 0),]
+ #   , dv = mean
+ #   , wid = ID
+ #   , between = performer
+ #   , within = .(frequency)
+ #   , type = 2
+ #   , detailed = TRUE
+ # )
+ # 
+ # print(a)
+ # 
+ # ddply(d, ~performer, summarise, mean = mean(rP_mean), sd = sd(rP_mean))
+ # 
+ # 
+  
  
