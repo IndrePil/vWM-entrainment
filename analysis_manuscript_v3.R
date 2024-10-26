@@ -16,6 +16,8 @@ library(lsr)
 library(car)
 library(seewave)
 library(data.table)
+library(MBESS)
+library(effsize)
 
 # data path
 setwd("C:\\Users\\IndrePil\\Documents\\vWM Entrainment\\paper vWM entrainment\\data_files\\")
@@ -607,7 +609,7 @@ entr = data.frame(t = time,
  dt <- ddply(d_joint, ~Experiment*frequency*performer*unique_ID, summarise, mean = mean(K_bsl))
  dt <- filter(dt, frequency != 0)
  
- a <- ezANOVA(
+ results <- ezANOVA(
    data = dt[which(dt$Experiment == "Visual"),]
    , dv = mean
    , wid = unique_ID
@@ -617,7 +619,39 @@ entr = data.frame(t = time,
    , detailed = TRUE
  )
  
- print(a)
+ print(results)
+ 
+
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ 
+ 
+ 
+ #ci.pvaf(F.value=3.73, df.1=1, df.2=37, N=39, conf.level=.90)
+ #ci.pvaf(F.value=5.556438, df.1=1, df.2=37, N=39, conf.level=.90)
+ #ci.pvaf(F.value=8.937894, df.1=1, df.2=37, N=39, conf.level=.90)
+ 
+ 
+ #m <- lmer(mean ~ performer*frequency + (1|unique_ID), data = dt[which(dt$Experiment == "Visual"),])
+ #eta_squared(m, alternative = "two.sided")
+ 
  
  a <- ezANOVA(
    data = dt[which(dt$Experiment == "Binaural (i)"),]
@@ -844,7 +878,7 @@ entr = data.frame(t = time,
  # RTs by cue type
  cues <- ddply(d,~ cue*ID*frequency,summarise,mean=mean(RT_corr_median))
  
- a <- ezANOVA(
+ results <- ezANOVA(
   # data = cues[which(cues$cue == "upper"),]
    data = cues
    , dv = mean
@@ -855,7 +889,34 @@ entr = data.frame(t = time,
    , detailed = TRUE
  )
  
- print(a)
+ print(results)
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ results$ANOVA
+
+ # CI for effect size
+ #Lims <- conf.limits.ncf(F.value = 1597, conf.level = 0.90, df.1 <- 3, df.2 <- 297)
+ #Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+ #Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+ #Lower.lim
+ #Upper.lim
  
  ggplot(cues[which(cues$cue == "centre"),], aes(frequency, mean))+
    geom_boxplot()
@@ -874,7 +935,7 @@ entr = data.frame(t = time,
  all_cues <- rbind(nc, sc, cc)
  
  
- a <- ezANOVA(
+ results <- ezANOVA(
    data = all_cues
    , dv = mean
    , wid = ID
@@ -883,6 +944,29 @@ entr = data.frame(t = time,
    , type = 2
    , detailed = TRUE
  )
+ 
+ print(results)
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ results$ANOVA
+ 
  
  print(a)
  pairwise.t.test(all_cues$mean, all_cues$frequency, data = all_cues, paired = TRUE, p.adjust.method = 'bonferroni')
@@ -937,6 +1021,13 @@ entr = data.frame(t = time,
         AS_4_7[which(AS_4_7$frequency == 7),'AS_norm_sub'], 
         paired = TRUE, alternative = 'two.sided' ) 
  
+ 
+ cohen.d(AS_norm_sub ~ frequency,
+         data   = AS_4_7,
+         pooled = TRUE,
+         method = "paired" 
+ )
+ 
 AS_4_7$frequency <- factor(AS_4_7$frequency)
  cohensD(AS_norm_sub ~ frequency,
          data   = AS_4_7,
@@ -946,9 +1037,15 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  t.test(AS_4_7[which(AS_4_7$frequency == 4),'AS_norm_sub'], mu = 0)
  cohensD(AS_4_7[which(AS_4_7$frequency == 4),'AS_norm_sub'],
          mu = 0)
+ cohen.d(AS_4_7[which(AS_4_7$frequency == 4),'AS_norm_sub'], NA,
+         mu = 0)
+ 
+ 
  
  t.test(AS_4_7[which(AS_4_7$frequency == 7),'AS_norm_sub'], mu = 0, alternative = 'two.sided')
  cohensD(AS_4_7[which(AS_4_7$frequency == 7),'AS_norm_sub'],
+         mu = 0)
+ cohen.d(AS_4_7[which(AS_4_7$frequency == 7),'AS_norm_sub'], NA,
          mu = 0)
  
  ggplot(AS_4_7, aes(frequency, AS_norm_sub*1000, fill = frequency))+
@@ -979,6 +1076,7 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  # behavioral summarized data
  d <- read.table("C:\\Users\\IndrePil\\Documents\\vWM Entrainment\\Pupillometry\\results\\allSummaryTable.csv", header=TRUE, sep=",", dec='.')
  
+ d <- read.table("C:\\Users\\IndrePil\\Documents\\vWM Entrainment\\paper vWM entrainment\\control_experiments\\pupillometry\\allSummaryTable.csv", header=TRUE, sep=",", dec='.')
  # raw behavioral
  d_all <- read.table("C:\\Users\\IndrePil\\Documents\\vWM Entrainment\\Pupillometry\\results\\allRespTable.csv", header=TRUE, sep=",", dec='.')
  
@@ -1149,7 +1247,7 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  leveneTest(mean ~ frequency*performer, data = dt)
  dt$tr <- log(dt$mean +1) # for checking validity of results with transformed data
 
- a <- ezANOVA(
+ results <- ezANOVA(
    data = dt[which(dt$frequency != 0),]
    , dv = mean
    , wid = ID
@@ -1160,6 +1258,31 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  )
  
  print(a)
+ 
+ print(results)
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ results$ANOVA
+ 
+ 
+ 
  
  ddply(d, ~performer, summarise, mean = mean(K_bsl), sd = sd(K_bsl))
  
@@ -1175,7 +1298,7 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  dt <- filter(dt, frequency!=0)
  leveneTest(mean ~ frequency*performer, data = dt)
  
- a <- ezANOVA(
+ results <- ezANOVA(
    data = dt[which(dt$frequency != 0),]
    , dv = mean
    , wid = ID
@@ -1186,6 +1309,29 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  )
  
  print(a)
+ 
+ print(results)
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ results$ANOVA
+ 
  
  ddply(d, ~performer, summarise, mean = mean(rP_mean), sd = sd(rP_mean))
  
@@ -1206,7 +1352,7 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  dt<- filter(dt, frequency != 0)
  leveneTest(mean ~ frequency, data = dt)
  
- a <- ezANOVA(
+ results <- ezANOVA(
    data = dt[which(dt$frequency != 0),]
    , dv = mean
    , wid = ID
@@ -1218,7 +1364,71 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  print(a)
  
+ 
+ print(results)
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ results$ANOVA
+ 
  ddply(dV, ~frequency, summarise, m = mean(K_bsl), sd = sd(K_bsl))
+ 
+ # CI
+# model <- aov(mean ~ frequency * jitter, data = dt[which(dt$frequency != 0),])
+# model <- anova(mean ~ frequency * jitter, data = dt[which(dt$frequency != 0),])
+
+# t <- lm(formula = mean ~ frequency * jitter,
+#         data = dt[which(dt$frequency != 0),])
+#m<- car::Anova(t, type = 2)
+
+#m <- lm(mean ~ frequency * jitter, data = dt[which(dt$frequency != 0),])
+
+#m1=lme(mean ~ frequency * jitter, data = dt[which(dt$frequency != 0),], random=~1|ID)
+
+
+#eta_squared(m, partial = FALSE, alternative = "two.sided")
+ 
+ 
+# eta2 <-eta_squared(m1, partial = FALSE, generalized = TRUE)
+# eta_squared(m1, alternative = "two.sided")
+ 
+# eta_squared(car::Anova(m, type = 2), partial = FALSE,alternative = "two.sided")
+ 
+ 
+ # CI for effect size
+# Lims <- conf.limits.ncf(F.value = 4.5963, conf.level = 0.90, df.1 <- 1, df.2 <- 38)
+# Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+# Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+# Lower.lim
+# Upper.lim
+ 
+# Lims <- conf.limits.ncf(F.value = 0.01, conf.level = 0.90, df.1 <- 1, df.2 <- 38)
+# Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+# Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+# Lower.lim
+# Upper.lim
+ 
+# Lims <- conf.limits.ncf(F.value = 2.0123, conf.level = 0.90, df.1 <- 1, df.2 <- 38)
+# Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+# Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+# Lower.lim
+# Upper.lim
  
  # binaural (i)
  
@@ -1239,10 +1449,16 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  dt <- filter(dt, frequency!=0)
  dt<- droplevels(dt)
- cohensD(mean_K ~ frequency,
-         data   = dt,
-         method = "paired")
-
+ # cohensD(mean_K ~ frequency,
+ #         data   = dt,
+ #         method = "paired")
+ 
+  cohen.d(mean_K ~ frequency,
+          data   = dt,
+          pooled = TRUE,
+          method = "paired" 
+          )
+ 
  # monaural (i)
  
  dt <- ddply(dMB, ~frequency*ID*jitter, summarise, mean = mean(K_bsl))
@@ -1258,7 +1474,7 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  dt <- filter(dt, frequency!=0)
  leveneTest(mean ~ frequency*jitter, data = dt)
 
- a <- ezANOVA(
+ results <- ezANOVA(
    data = dt[which(dt$frequency != 0),]
    , dv = mean
    , wid = ID
@@ -1270,7 +1486,47 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  print(a)
  
+ print(results)
+ 
+ results$ANOVA$partialetasquared <- results$ANOVA$SSn/(results$ANOVA$SSn+results$ANOVA$SSd)
+ loweretasquared <- c()
+ upperetasquared <- c()
+ for (cR in 1:nrow(results$ANOVA)) {
+   Lims <- conf.limits.ncf(F.value = results$ANOVA$F[cR], conf.level = 0.95, df.1 <- results$ANOVA$DFn[cR], df.2 <- results$ANOVA$DFd[cR])
+   Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+   Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+   if (is.na(Lower.lim)) {
+     Lower.lim <- 0
+   }
+   if (is.na(Upper.lim)) {
+     Upper.lim <- 1
+   }
+   loweretasquared <- c(loweretasquared,Lower.lim)
+   upperetasquared <- c(upperetasquared,Upper.lim)
+ }
+ results$ANOVA$partialetasquared.lower <- loweretasquared
+ results$ANOVA$partialetasquared.upper <- upperetasquared
+ results$ANOVA
+ 
  ddply(dMB, ~frequency, summarise, m = mean(K_bsl), sd = sd(K_bsl))
+ 
+ Lims <- conf.limits.ncf(F.value = 3.8914888, conf.level = 0.90, df.1 <- 1, df.2 <- 19)
+ Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+ Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+ Lower.lim
+ Upper.lim
+ 
+ Lims <- conf.limits.ncf(F.value = 0.4101970, conf.level = 0.90, df.1 <- 1, df.2 <- 19)
+ Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+ Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+ Lower.lim
+ Upper.lim
+ 
+ Lims <- conf.limits.ncf(F.value = 0.1619604, conf.level = 0.90, df.1 <- 1, df.2 <- 19)
+ Lower.lim <- Lims$Lower.Limit/(Lims$Lower.Limit + df.1 + df.2 + 1)
+ Upper.lim <- Lims$Upper.Limit/(Lims$Upper.Limit + df.1 + df.2 + 1)
+ Lower.lim
+ Upper.lim
  
  # binaural (ii)
  
@@ -1293,9 +1549,12 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  #dt <- filter(dt, frequency!=0)
  dt<- droplevels(dt)
- cohensD(mean_K ~ frequency,
+ 
+ cohen.d(mean_K ~ frequency,
          data   = dt,
-         method = "paired")
+         pooled = TRUE,
+         method = "paired" 
+ )
  
  # binaural (iii)
  
@@ -1318,9 +1577,12 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  #dt <- filter(dt, frequency!=0)
  dt<- droplevels(dt)
- cohensD(mean_K ~ frequency,
+ 
+ cohen.d(mean_K ~ frequency,
          data   = dt,
-         method = "paired")
+         pooled = TRUE,
+         method = "paired" 
+ )
  
  # monaural (ii)
  
@@ -1342,9 +1604,12 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  dt <- filter(dt, frequency!=0)
  dt<- droplevels(dt)
- cohensD(mean_K ~ frequency,
+
+ cohen.d(mean_K ~ frequency,
          data   = dt,
-         method = "paired")
+         pooled = TRUE,
+         method = "paired" 
+ )
  #=========================================================
  #========== rhythmic minus arrhythmic in Visual ==========
  #=========================================================
@@ -1378,18 +1643,39 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
         r[which(r$freq == 7), 'diff'],
         paired = TRUE)
  
- cohensD(mean ~ frequency,
+ # cohensD(mean ~ frequency,
+ #         data   = r,
+ #         method = "paired")
+ 
+ cohen.d(mean ~ frequency,
          data   = r,
-         method = "paired")
+         pooled = TRUE,
+         method = "paired" 
+ )
  
  t.test(r[which(r$freq == 7), 'diff'], mu = 0)
  
  cohensD(r[which(r$frequency == 7),"diff"],
          mu = 0)
  
+# CI for d
+ # tval <- t.test(r[which(r$freq == 7), 'diff'])$statistic
+ # n <- length(r[which(r$freq == 7), 'diff'])
+ # pt(tval, df=n-1, ncp=0.0266992 * sqrt(n), lower.tail=FALSE)
+ # pt(tval, df=n-1, ncp=0.9579698 * sqrt(n), lower.tail=TRUE)
+ # 
+ cohen.d(r[which(r$freq == 7), 'diff'], NA,
+         mu = 0)
+
+ 
  t.test(r[which(r$freq == 4), 'diff'], mu = 0)
  cohensD(r[which(r$frequency == 4),"diff"],
          mu = 0)
+ 
+ cohen.d(r[which(r$freq == 4), 'diff'], NA,
+         mu = 0)
+ 
+
 
  mean(r[which(r$frequency == 4),"mean"])/sd(r[which(r$frequency == 4),"mean"])
  
@@ -1404,7 +1690,10 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  t.test(dt[which(dt$condition == "entr"), 'mean_K'], mu = 0)
 
- cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
+ # cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
+ #         mu = 0)
+ 
+ cohen.d(dt[which(dt$condition == "entr"), 'mean_K'], NA,
          mu = 0)
  
  # Monaural i
@@ -1413,8 +1702,12 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  t.test(dt[which(dt$condition == "entr"), 'mean_K'], mu = 0)
  
- cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
+ # cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
+ #         mu = 0)
+ cohen.d(dt[which(dt$condition == "entr"), 'mean_K'], NA,
          mu = 0)
+ 
+
  
  # Monaural ii
  dt <- ddply(dOn_sum, ~ID*condition, summarise, mean_K = mean(K_bsl))
@@ -1423,6 +1716,8 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  t.test(dt[which(dt$condition == "entr"), 'mean_K'], mu = 0)
  
  cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
+         mu = 0)
+ cohen.d(dt[which(dt$condition == "entr"), 'mean_K'], NA,
          mu = 0)
 
  # Binaural i
@@ -1433,6 +1728,8 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
          mu = 0)
+ cohen.d(dt[which(dt$condition == "entr"), 'mean_K'], NA,
+         mu = 0)
  
  # Binaural ii
  dt <- ddply(dBB2_sum, ~ID*condition, summarise, mean_K = mean(K_bsl))
@@ -1442,6 +1739,8 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  
  cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
          mu = 0)
+ cohen.d(dt[which(dt$condition == "entr"), 'mean_K'], NA,
+         mu = 0)
  
  # Binaural iii
  dt <- ddply(dBB3_sum, ~ID*condition, summarise, mean_K = mean(K_bsl))
@@ -1450,6 +1749,9 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  t.test(dt[which(dt$condition == "entr"), 'mean_K'], mu = 0)
  
  cohensD(dt[which(dt$condition == "entr"), 'mean_K'],
+         mu = 0)
+ 
+ cohen.d(dt[which(dt$condition == "entr"), 'mean_K'], NA,
          mu = 0)
  
  #============================================================
@@ -1526,41 +1828,6 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
          axis.title=element_text(size=14))
  #ggsave('data_for_glmer.png')
  
- #dt<- ddply( d_all_cl, ~ID*response*frequency*loads, summarise, mean_pupil = mean(rPupil_fixation_2000_z, na.rm = TRUE))
- ##dt <- filter(dt, response != "Timeout")
-
- 
- 
-# a1 <- ezANOVA(
-#   data = dt
-#   , dv = mean_pupil
-#   , wid = ID
-#   , within = .(frequency, response, loads)
-   #, between = performer
-#   , type = 2
-#   , detailed = TRUE
-# )
- 
-# print(a1)
- 
-# ggplot(dt, aes(response, mean_pupil, color = frequency, group = frequency))+
-#   stat_summary(fun.y = "mean",  geom = "line",  size = 1)+
-#   stat_summary(fun.data = mean_se, geom = "errorbar", size = 1, width = 0.3)+
-#   ylab('mean pupil (z-score)')+
-#   theme_classic()+
-#   theme(
-#     axis.text=element_text(size=18),
-#     axis.title=element_text(size=20),
-#     legend.title = element_text(size = 20),
-#     legend.text = element_text(size = 18))
- 
-# t.test(dt[which(dt$frequency == 4 & dt$response == "Correct"),'mean_pupil'], 
-#        dt[which(dt$frequency == 7 & dt$response == "Correct"),'mean_pupil'], 
-#        paired = TRUE, alternative = 'two.sided' )
- 
-# t.test(dt[which(dt$frequency == 4 & dt$response == "Wrong"),'mean_pupil'], 
-#        dt[which(dt$frequency == 7 & dt$response == "Wrong"),'mean_pupil'], 
-#        paired = TRUE, alternative = 'two.sided' )
  
  #Linear mixed model for accuracy data
  library(lme4)
@@ -1574,55 +1841,3 @@ AS_4_7$frequency <- factor(AS_4_7$frequency)
  print(m1, corr = FALSE)
  summary(m1)
  anova(m1)
- 
- # run likelihood ratio test to see how well the model fits the data
- 
- # m <- glmer(response2 ~ frequency*rPupil_fixation_2000_z+
- #              (1 | ID), data = d_all_cl, family = binomial)
- # 
- # m2 <- glmer(response2 ~ frequency+rPupil_fixation_2000_z+
- #               (1 | ID), data = d_log, family = binomial)
- # 
- # m3 <- glmer(response2 ~ rPupil_fixation_2000_z+
- #               (1 | ID), data = d_log, family = binomial)
- # 
- # m4 <- glm(response2 ~ rPupil_fixation_2000_z, data = d_log, family = binomial)
- # 
- # anova(m, m4, test ="Chisq")
- # library(lmtest)
- # lrtest(m, m2)
- # 
- # 
- # 
- # 
- # 
- # dt <- ddply(d, ~ID*frequency*performer*load*Response, summarise, mean = mean(rP_mean))
- # dt$frequency <- as.factor(dt$frequency)
- # 
- # # check assumptions
- # shapiro.test(dt[which(dt$frequency == 4 & performer == "low"),'mean'])
- # shapiro.test(dt[which(dt$frequency == 4 & performer == "high"),'mean'])
- # shapiro.test(dt[which(dt$frequency == 7 & performer == "low"),'mean'])
- # shapiro.test(dt[which(dt$frequency == 7 & performer == "high"),'mean'])
- # dt <- filter(dt, frequency!=0)
- # dt <- filter(dt, ID)
- # 
- # leveneTest(mean ~ frequency*performer, data = dt)
- # 
- # a <- ezANOVA(
- #   data = dt[which(dt$frequency != 0),]
- #   , dv = mean
- #   , wid = ID
- #   , between = performer
- #   , within = .(frequency)
- #   , type = 2
- #   , detailed = TRUE
- # )
- # 
- # print(a)
- # 
- # ddply(d, ~performer, summarise, mean = mean(rP_mean), sd = sd(rP_mean))
- # 
- # 
-  
- 
